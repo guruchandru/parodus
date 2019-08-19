@@ -30,6 +30,7 @@
 #include "../src/ParodusInternal.h"
 #include "../src/connection.h"
 #include "../src/config.h"
+#include "../src/event_handler.h"
 
 const char *header  = "{	\"alg\":	\"RS256\",	\"typ\":	\"JWT\"}";
 
@@ -182,6 +183,11 @@ void *CRUDHandlerTask()
 	return NULL;
 }
 
+void EventHandler()
+{
+       return NULL;
+}
+
 int setup_test_jwts (void)
 {
 	memset (&jwt1, 0, sizeof(cjwt_t));
@@ -331,6 +337,7 @@ void		__res_nclose (res_state statp)
 	UNUSED (statp);
 	function_called ();
 }
+
 
 // Analyzes a jwt structure
 void test_analyze_jwt ()
