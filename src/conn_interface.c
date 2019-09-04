@@ -36,6 +36,7 @@
 #include "crud_interface.h"
 #include "heartBeat.h"
 #include "close_retry.h"
+#include "set_led.h"
 #include <curl/curl.h>
 #ifdef FEATURE_DNS_QUERY
 #include <ucresolv_log.h>
@@ -148,6 +149,7 @@ void createSocketConnection(void (* initKeypress)())
                 OnboardLog("Reconnect detected, setting Ping_Miss reason for Reconnect\n");
                 set_global_reconnect_reason("Ping_Miss");
                 set_global_reconnect_status(true);
+                ParodusSetLed(RED, BLINK, 1);
                 set_close_retry();
             }
             else
