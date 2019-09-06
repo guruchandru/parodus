@@ -33,6 +33,7 @@
 #include "spin_thread.h"
 #include "service_alive.h"
 #include "seshat_interface.h"
+#include "event_handler.h"
 #include "crud_interface.h"
 #include "heartBeat.h"
 #include "close_retry.h"
@@ -58,6 +59,7 @@ pthread_t upstream_msg_tid;
 pthread_t downstream_tid;
 pthread_t svc_alive_tid;
 pthread_t crud_tid;
+
 
 /*----------------------------------------------------------------------------*/
 /*                             Function Prototypes                            */
@@ -112,6 +114,7 @@ void createSocketConnection(void (* initKeypress)())
     ParodusMsgQ = NULL;
     StartThread(messageHandlerTask, &downstream_tid);
     StartThread(serviceAliveTask, &svc_alive_tid);
+    //EventHandler();
     StartThread(CRUDHandlerTask, &crud_tid);
 
     if (NULL != initKeypress) 
@@ -148,6 +151,8 @@ void createSocketConnection(void (* initKeypress)())
                 OnboardLog("Reconnect detected, setting Ping_Miss reason for Reconnect\n");
                 set_global_reconnect_reason("Ping_Miss");
                 set_global_reconnect_status(true);
+                (*notifyCbFn)("missed");                
+		register_callback(&parodusOnPingStatusChangeHandler);
                 set_close_retry();
             }
             else
