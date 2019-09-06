@@ -32,6 +32,7 @@
 #include "ParodusInternal.h"
 #include "heartBeat.h"
 #include "close_retry.h"
+#include "event_handler.h"
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/
@@ -606,6 +607,12 @@ int createNopollConnection(noPollCtx *ctx)
 		OnboardLog("Connected to server\n");
 	}
 	
+
+	if(strcmp(get_global_reconnect_reason(),"Ping_Miss") == 0)
+        {
+		parodusOnPingStatusChangeHandler("received");
+                
+        }
 	get_parodus_cfg()->cloud_status = CLOUD_STATUS_ONLINE;
 	ParodusInfo("cloud_status set as %s after successful connection\n", get_parodus_cfg()->cloud_status);
 
