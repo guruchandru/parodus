@@ -151,6 +151,7 @@ void __report_log (noPollCtx * ctx, noPollDebugLevel level, const char * log_msg
     if (level == NOPOLL_LEVEL_INFO) 
     {
         ParodusInfo ("%s\n", log_msg);
+        OnboardLog("%s\n", log_msg );
     }
     if (level == NOPOLL_LEVEL_WARNING) 
     {
