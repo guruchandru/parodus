@@ -73,7 +73,7 @@ void sendMessage(noPollConn *conn, void *msg, size_t len)
     else
     {
                 ParodusError("Failed to send msg upstream as connection is not OK\n");
-                OnboardLog("Failed to send msg upstream as connection is not OK\n");
+                //OnboardLog("Failed to send msg upstream as connection is not OK\n");
 
                 if(get_interface_down_event())
                 {     
@@ -96,7 +96,7 @@ void sendMessage(noPollConn *conn, void *msg, size_t len)
 				if( timeDiff >= (10*60*1000))
 				{
 					ParodusError("conn got stuck for over 10 minutes; crashing service.\n");
-					OnboardLog("conn got stuck for over 10 minutes; crashing service.\n");
+					//OnboardLog("conn got stuck for over 10 minutes; crashing service.\n");
 					kill(getpid(),SIGTERM);
 				}
 
@@ -159,7 +159,7 @@ void __report_log (noPollCtx * ctx, noPollDebugLevel level, const char * log_msg
     if (level == NOPOLL_LEVEL_CRITICAL) 
     {
         ParodusError("%s\n", log_msg );
-	OnboardLog("%s\n", log_msg );
+	//OnboardLog("%s\n", log_msg );
     }
     return;
 }
