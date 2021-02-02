@@ -645,19 +645,25 @@ int keep_trying_to_connect (create_connection_ctx_t *ctx,
 	backoff_timer_t *backoff_timer)
 {
     int rtn;
-    
+    ParodusInfo("Before while loop\n");
     while (!g_shutdown)
     {
       set_extra_headers (ctx);
 
       rtn = connect_and_wait (ctx);
       if (rtn == CONN_WAIT_SUCCESS)
+      {
+	ParodusInfo("CONN_WAIT_SUCCESS\n");
         return true;
-
+      }
       if (rtn == CONN_WAIT_ACTION_RETRY) // if redirected or build_headers
+        {
+	ParodusInfo("CONN_WAIT_ACTION_RETRY\n");
         continue;
+        }
       // If interface down event is set, stop retry
       // and wait till interface is up again.
+      ParodusInfo("get_interface_down_event is %s\n",get_interface_down_event()?"true":"false");
       if(get_interface_down_event()) {
 	    if (0 != wait_while_interface_down())
 	      return false;
@@ -666,16 +672,22 @@ int keep_trying_to_connect (create_connection_ctx_t *ctx,
 	    // Reset the reconnect reason by initializing the convey header again
 	    ((header_info_t *)(&ctx->header_info))->conveyHeader = getWebpaConveyHeader();
 	    ParodusInfo("Received reconnect_reason as:%s\n", reconnect_reason);  
-      } else { 
+      } else {
+           ParodusInfo("Inside else part in keep_trying_to_connect\n");
         if (backoff_delay (backoff_timer) // 3,7,15,31 ..
               != BACKOFF_DELAY_TAKEN) // shutdown or cond wait error
+          {
+	  ParodusInfo("BACKOFF_DELAY_TAKEN\n");
           return false;
+	}
       }
       if (rtn == CONN_WAIT_FAIL) {
+         ParodusInfo("CONN_WAIT_FAIL\n");
         return false;
       }
       // else retry
     }
+    ParodusInfo("Outside while\n");
     return false;
 }
 
@@ -852,14 +864,17 @@ static void close_conn ( noPollConn *conn, bool is_shutting_down)
 	const char *effective_reason = get_global_shutdown_reason();
 	
 	if (NULL == effective_reason) {
+	ParodusInfo ("Inside effective_reason\n");
           effective_reason = SHUTDOWN_REASON_SYSTEM_RESTART;
     }
     else if (strcmp (effective_reason, SHUTDOWN_REASON_SIGTERM) == 0) {
 		char *sigterm_reason;
 		char *reason_file = get_parodus_cfg()->close_reason_file;
+                 ParodusInfo ("Inside else part\n");
         if ((NULL != reason_file) && readFromFile (reason_file, &sigterm_reason) &&
             (strlen(sigterm_reason) != 0)) 
         {
+          ParodusInfo ("Inside sigterm_reason\n");
           nopoll_conn_close_ext(conn, CloseNormalClosure, sigterm_reason, 
 			strlen (sigterm_reason));
 		  ParodusInfo ("Closed by SIGTERM, reason: %s\n", sigterm_reason);
@@ -880,6 +895,7 @@ static void close_conn ( noPollConn *conn, bool is_shutting_down)
 		
 void close_and_unref_connection(noPollConn *conn, bool is_shutting_down)
 {
+    ParodusInfo("Before conn close condition\n");
     if (conn) {
       close_conn (conn, is_shutting_down);
       get_parodus_cfg()->cloud_status = CLOUD_STATUS_OFFLINE;
