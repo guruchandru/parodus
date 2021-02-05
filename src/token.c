@@ -493,7 +493,7 @@ int allow_insecure_conn(char **server_addr, unsigned int *port)
 	get_dns_txt_record_id (dns_txt_record_id);
 	
 	ret = query_dns(dns_txt_record_id, jwt_token);
-	ParodusPrint("query_dns returns %d\n", ret);
+	ParodusInfo("query_dns returns %d\n", ret);
 		
 	if(ret){
 		ParodusError("Failed in DNS query\n");
@@ -519,20 +519,25 @@ int allow_insecure_conn(char **server_addr, unsigned int *port)
 		goto end;
 	}
 
-	ParodusPrint("Decoded CJWT successfully\n");
+	ParodusInfo("Decoded CJWT successfully\n");
 
 	//validate algo from --jwt_algo
+	ParodusInfo("Before validate_algo if condition\n");
 	if( validate_algo(jwt) ) {
+		ParodusInfo("Inside validate_algo if condition\n");
 		insecure = analyze_jwt (jwt, server_addr, port);
 	} else {
+		ParodusInfo("Inside validate_algo else condition\n");
 		insecure = TOKEN_ERR_ALGO_NOT_ALLOWED;
 	}
 
+	ParodusInfo("After validat_algo condition\n");
 	if (insecure >= 0) {
 		char *claim_str = cJSON_Print (jwt->private_claims);
 		ParodusInfo ("JWT claims: %s\n", claim_str);
 		free (claim_str);
 	}
+	ParodusInfo("Before jwt destroy\n");
 	cjwt_destroy(&jwt);
 	
 end:
@@ -543,6 +548,6 @@ end:
   (void) port;
   int insecure = TOKEN_NO_DNS_QUERY;
 #endif
-	ParodusPrint ("Allow Insecure %d\n", insecure);
+	ParodusInfo ("Allow Insecure %d\n", insecure);
 	return insecure;
 }

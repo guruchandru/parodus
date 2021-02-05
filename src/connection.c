@@ -471,6 +471,7 @@ int find_servers (server_list_t *server_list)
   if (get_parodus_cfg()->acquire_jwt) {
     server_t *jwt_server = &server_list->jwt;
     //query dns and validate JWT
+    ParodusInfo("Before allow_insecure_conn function call\n");
     jwt_server->allow_insecure = allow_insecure_conn(
              &jwt_server->server_addr, &jwt_server->port);
     if (jwt_server->allow_insecure < 0) {
@@ -731,11 +732,18 @@ int createNopollConnection(noPollCtx *ctx, server_list_t *server_list)
 	conn_ctx.nopoll_ctx = ctx;
 	init_expire_timer (&conn_ctx.connect_timer);
 	init_header_info (&conn_ctx.header_info);
+	ParodusInfo("After init_header_info \n");
 	/* look up server information if we don't already have it */
 	if (server_is_null (&server_list->defaults))
-	  if (find_servers (server_list) == FIND_INVALID_DEFAULT) {
-        return nopoll_false;		  
-      }
+	{
+          ParodusInfo("Inside server_is_null if condition\n");
+	  if (find_servers (server_list) == FIND_INVALID_DEFAULT)
+          {
+              ParodusInfo("Inside find_servers server list condition\n");
+              return nopoll_false;		  
+          }
+          ParodusInfo("After the find_servers if condition\n");
+	}
 	conn_ctx.server_list = server_list;
     init_backoff_timer (&backoff_timer, max_retry_count);
     start_conn_in_progress (backoff_timer.start_time); 
@@ -752,11 +760,16 @@ int createNopollConnection(noPollCtx *ctx, server_list_t *server_list)
       free_server (&conn_ctx.server_list->redirect);
 #ifdef FEATURE_DNS_QUERY
       /* if we don't already have a valid jwt, look up server information */
+	ParodusInfo("Before FEATURE_DNS_QUERY server_is_null if condition\n");
       if (server_is_null (&conn_ctx.server_list->jwt))
+      {
+	ParodusInfo("Inside FEATURE_DNS_QUERY server_is_null if condition\n");
         if (find_servers (conn_ctx.server_list) == FIND_INVALID_DEFAULT) {
+		ParodusInfo("Inside FEATURE_DNS_QUERY find_servers if condition\n");
 		  /* since we already found a default server, we don't expect FIND_INVALID_DEFAULT */
 		  g_shutdown = true;
 	    }
+	}
 #endif		
 	}
       
