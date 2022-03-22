@@ -44,7 +44,6 @@ extern "C" {
 #define WEBPA_PROTOCOL          "webpa-protocol"
 #define WEBPA_INTERFACE         "webpa-interface-used"
 #define WEBPA_UUID              "webpa-uuid"
-#define WEBPA_URL               "webpa-url"
 #define WEBPA_PING_TIMEOUT      "webpa-ping-timeout"
 #define WEBPA_BACKOFF_MAX       "webpa-backoff-max"
 #define PARTNER_ID              "partner-id"
@@ -60,10 +59,21 @@ extern "C" {
 #define WEBPA_PATH_URL                  "/api/v2/device"
 #define JWT_ALGORITHM					"jwt-algo"
 #define	JWT_KEY						"jwt-key"
-#define DNS_TXT_URL	"fabric"
 #define PARODUS_UPSTREAM                "tcp://127.0.0.1:6666"
 
 #define ALLOW_NON_RSA_ALG	false
+
+#ifdef _SR300_PRODUCT_REQ_
+
+#define WEBPA_URL               "webpa-eu-url"
+#define DNS_TXT_URL	         "fabric-eu"
+
+#else
+
+#define WEBPA_URL               "webpa-url"
+#define DNS_TXT_URL	         "fabric"
+
+#endif
 
 /*----------------------------------------------------------------------------*/
 /*                               Data Structures                              */
