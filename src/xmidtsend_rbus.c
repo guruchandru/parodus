@@ -902,7 +902,7 @@ void addToXmidtSentMsgQ(wrp_msg_t * msg, rbusMethodAsyncHandle_t asyncHandle)
 	{
 		message->msg = msg;
 		message->asyncHandle =asyncHandle;
-		message->startTime = 0; //TODO: calculate current time and add it
+		message->startTime = setStartTime();
 		message->status = "pending";
 		message->next=NULL;
 		pthread_mutex_lock (&xmidtsend_mut);
@@ -1041,6 +1041,7 @@ void* cloudAckHandler()
 				break;
 			}
 			ParodusInfo("Before cond wait in cloudack consumer thread\n");
+			checkCloudAckTimeout();
 			pthread_cond_wait(&cloudack_con, &cloudack_mut);
 			pthread_mutex_unlock (&cloudack_mut);
 			ParodusInfo("mutex unlock in cloudack thread after cond wait\n");
@@ -1117,4 +1118,57 @@ void xmidtSendMsgQDequeue()
 		ParodusError("XmidtSentMsgQ is NULL\n");
 	}
 	pthread_mutex_unlock (&xmidtsend_mut);
+}
+
+void checkCloudAckTimeout()
+{
+	XmidtSentMsg *check = XmidtSentMsgQ;
+	int rdr = -1;
+	while( check != NULL)
+	{
+		if(checkCloudAckTimer(check->startTime))
+		{
+			ParodusInfo("Cloud ACK Timedout\n");
+			createOutParamsandSendAck(check->msg, check->asyncHandle, check->status, CLOUD_TIMEOUT, rdr);
+			xmidtSendMsgQDequeue();
+		}
+		else
+		{
+			check = check->next;
+		}
+	}
+	return;
+}
+
+long long setStartTime()
+{
+	struct timespec ts;
+	struct timeval tp;
+
+	gettimeofday(&tp, NULL);
+
+	ts.tv_sec = tp.tv_sec;
+	ts.tv_nsec = tp.tv_usec * 1000;
+
+	return (long long)ts.tv_sec;
+}
+
+int checkCloudAckTimer( long long startTime)
+{
+	struct timespec rt;
+
+	long long timeout = 0;
+
+	clock_gettime(CLOCK_REALTIME, &rt);
+	timeout = rt.tv_sec + CLOUD_ACK_TIMEOUT;
+
+	ParodusInfo("The startTime is %lld\n", startTime);
+	ParodusInfo("The timeout value is %lld\n", timeout);
+
+	if(timeout >= startTime)
+	{
+		ParodusInfo("Cloud Ack Timedout\n");
+		return 1;
+	}
+	return 0;
 }

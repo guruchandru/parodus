@@ -32,6 +32,7 @@ extern "C" {
 #define XMIDT_SEND_METHOD "Device.X_RDK_Xmidt.SendData"
 #define MAX_QUEUE_SIZE 10
 #define INPARAMS_PATH   "/tmp/inparams.txt"
+#define CLOUD_ACK_TIMEOUT 7
 /*----------------------------------------------------------------------------*/
 /*                               Data Structures                              */
 /*----------------------------------------------------------------------------*/
@@ -46,7 +47,7 @@ typedef struct XmidtSentMsg__
 {
 	wrp_msg_t *msg;
 	rbusMethodAsyncHandle_t asyncHandle;
-	int startTime;
+	long long startTime;
         char * status;
 	struct XmidtSentMsg__ *next;
 } XmidtSentMsg;
@@ -72,7 +73,8 @@ typedef enum
     CLIENT_DISCONNECT = 101,
     QUEUE_SIZE_EXCEEDED = 102,
     WRP_ENCODE_FAILURE = 103,
-    MSG_PROCESSING_FAILED = 104
+    MSG_PROCESSING_FAILED = 104,
+    CLOUD_TIMEOUT = 150
 } XMIDT_STATUS;
 /*----------------------------------------------------------------------------*/
 /*                             Function Prototypes                            */
@@ -98,10 +100,12 @@ void addToCloudAckQ(char *transaction_id, int qos, int rdr);
 void processCloudAck();
 void* cloudAckHandler();
 int processCloudAckMsg(char *trans_id, int qos, int rdr);
-int checkCloudAckTimer(int startTime); //TODO: 7s timeout handling and send callback
+int checkCloudAckTimer(long long startTime); //TODO: 7s timeout handling and send callback
 XmidtSentMsg* get_global_sendnode(void);
 void release_global_sendnode (void);
 void xmidtSendMsgQDequeue();
+long long setStartTime();
+void checkCloudAckTimeout();
 #ifdef __cplusplus
 }
 #endif
