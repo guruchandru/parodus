@@ -32,6 +32,7 @@
 /*                             Function Prototypes                            */
 /*----------------------------------------------------------------------------*/
 static void createNewMsgForCRUD(wrp_msg_t *message, wrp_msg_t **crudMessage );
+static void createNewMsgForCloudACK(wrp_msg_t *message, wrp_msg_t **eventMessage ); //Test purpose.
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -60,7 +61,7 @@ void listenerOnMessage(void * msg, size_t msgSize)
     void *resp_bytes;
     cJSON *response = NULL;
     reg_list_item_t *temp = NULL;
-
+    int test = 0;
     recivedMsg =  (const char *) msg;
 
     ParodusInfo("Received msg from server\n");
@@ -142,6 +143,7 @@ void listenerOnMessage(void * msg, size_t msgSize)
                                 ParodusInfo("sent downstream message to reg_client '%s'\n",temp->url);
                                 ParodusPrint("downstream bytes sent:%d\n", bytes);
                                 destFlag =1;
+				test = 1;
                                 break;
                             }
                             ParodusPrint("checking the next item in the list\n");
@@ -237,10 +239,17 @@ void listenerOnMessage(void * msg, size_t msgSize)
                         free(resp_msg);
                     }
 		    //To handle cloud ack events received from server for the xmidt sent messages.
+		    if(test == 1 || test == 3)
+		    {
+			wrp_msg_t *eventMsg= NULL;
+			ParodusInfo("Create downstream event Msg with cloud ack\n");
+			createNewMsgForCloudACK(message, &eventMsg);
+			msgType = WRP_MSG_TYPE__EVENT;
+			ParodusInfo("check cloud ack\n");
 		    if((WRP_MSG_TYPE__EVENT == msgType) && (ret >= 0))
 		    {
 			//Process cloud ack only when qos > 24
-			if(highQosValueCheck(message->u.event.qos))
+			/*if(highQosValueCheck(message->u.event.qos))
 			{
 				if(message->u.event.transaction_uuid !=NULL)
 				{
@@ -256,7 +265,28 @@ void listenerOnMessage(void * msg, size_t msgSize)
 			else
 			{
 				ParodusInfo("cloud ack received with low qos %d, ignoring it\n", message->u.event.qos);
+			}*/
+			//Remove this. TEST purpose.
+			if(highQosValueCheck(eventMsg->u.event.qos))
+			{
+				if(eventMsg->u.event.transaction_uuid !=NULL)
+				{
+					ParodusInfo("Received cloud ack from server: transaction_uuid %s qos %d, rdr %d\n", eventMsg->u.event.transaction_uuid, eventMsg->u.event.qos, eventMsg->u.event.rdr);
+					addToCloudAckQ(eventMsg->u.event.transaction_uuid, eventMsg->u.event.qos, eventMsg->u.event.rdr);
+					ParodusInfo("Added to cloud ack Q\n");
+				}
+				else
+				{
+					ParodusError("cloud ack transaction id is NULL\n");
+				}
 			}
+			else
+			{
+				ParodusInfo("cloud ack received with low qos %d, ignoring it\n", eventMsg->u.event.qos);
+			}
+			test++;
+			ParodusInfo("test is %d\n", test);
+		    }
 		    }
                     break;
                 }
@@ -389,4 +419,39 @@ static void createNewMsgForCRUD(wrp_msg_t *message, wrp_msg_t **crudMessage )
         }
         *crudMessage = msg;
     }
+}
+//Test purpose. to create new message for processing cloud ACK .
+static void createNewMsgForCloudACK(wrp_msg_t *message, wrp_msg_t **eventMessage )
+{
+    wrp_msg_t *msg;
+    msg = ( wrp_msg_t * ) malloc( sizeof( wrp_msg_t ) );
+    if(msg != NULL)
+    {
+        memset( msg, 0, sizeof( wrp_msg_t ) );
+        msg->msg_type = WRP_MSG_TYPE__EVENT;
+        if(message->u.event.source != NULL)
+        {
+            msg->u.event.source = strdup("event:/profile-notify/MyProfile1");
+        }
+
+        if(message->u.event.dest != NULL)
+        {
+            msg->u.event.dest = strdup("mac:889e6863239e/telemetry2");
+        }
+
+        if(message->u.event.transaction_uuid != NULL)
+        {
+            msg->u.event.transaction_uuid = strdup("8d72d4c2-1f59-4420-a736-3946083d529a");
+        }
+
+        if(message->u.event.content_type != NULL)
+        {
+            msg->u.event.content_type = strdup("application/json");
+        }
+        msg->u.event.rdr = 0;
+	msg->u.event.qos = 50;
+	ParodusInfo("msg->u.event.rdr = %d msg->u.event.qos = %d\n",msg->u.event.rdr, msg->u.event.qos);
+        *eventMessage = msg;
+    }
+    ParodusInfo("createNewMsgForCloudACK done\n");
 }
