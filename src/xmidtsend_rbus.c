@@ -1133,6 +1133,7 @@ void checkCloudAckTimeout()
 		{
 			ParodusInfo("Cloud ACK Timedout\n");
 			createOutParamsandSendAck(check->msg, check->asyncHandle, check->status, CLOUD_TIMEOUT, rdr);
+			ParodusInfo("After Timeout Ack Sent\n");
 			xmidtSendMsgQDequeue();
 		}
 		else
@@ -1160,15 +1161,17 @@ int checkCloudAckTimer( long long startTime)
 {
 	struct timespec rt;
 
-	long long timeout = 0;
+	long long timeout, currentTime = 0;
 
 	clock_gettime(CLOCK_REALTIME, &rt);
-	timeout = rt.tv_sec + CLOUD_ACK_TIMEOUT;
+	currentTime = rt.tv_sec;
+	timeout = startTime + CLOUD_ACK_TIMEOUT;
 
 	ParodusInfo("The startTime is %lld\n", startTime);
+	ParodusInfo("The currentTime is %lld\n", currentTime);
 	ParodusInfo("The timeout value is %lld\n", timeout);
 
-	if(timeout >= startTime)
+	if(currentTime >= timeout)
 	{
 		ParodusInfo("Cloud Ack Timedout\n");
 		return 1;
