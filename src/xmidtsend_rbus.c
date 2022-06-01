@@ -511,7 +511,7 @@ void createOutParamsandSendAck(wrp_msg_t *msg, rbusMethodAsyncHandle_t asyncHand
 	rbusObject_SetValue(outParams, "msg_type", value);
 	rbusValue_Release(value);
 
-	ParodusPrint("statuscode %d errorMsg %s\n", statuscode, errorMsg);
+	ParodusInfo("statuscode %d errorMsg %s\n", statuscode, errorMsg);
 	rbusValue_Init(&value);
 	rbusValue_SetInt32(value, statuscode);
 	rbusObject_SetValue(outParams, "status", value);
@@ -530,7 +530,7 @@ void createOutParamsandSendAck(wrp_msg_t *msg, rbusMethodAsyncHandle_t asyncHand
 	{
 		if(msg->u.event.source !=NULL)
 		{
-			ParodusPrint("msg->u.event.source is %s\n", msg->u.event.source);
+			ParodusInfo("msg->u.event.source is %s\n", msg->u.event.source);
 			rbusValue_Init(&value);
 			rbusValue_SetString(value, msg->u.event.source);
 			rbusObject_SetValue(outParams, "source", value);
@@ -555,7 +555,7 @@ void createOutParamsandSendAck(wrp_msg_t *msg, rbusMethodAsyncHandle_t asyncHand
 
 		rbusValue_Init(&value);
 		snprintf(qosstring, sizeof(qosstring), "%d", msg->u.event.qos);
-		ParodusPrint("qosstring is %s\n", qosstring);
+		ParodusInfo("qosstring is %s\n", qosstring);
 		rbusValue_SetString(value, qosstring);
 		rbusObject_SetValue(outParams, "qos", value);
 		rbusValue_Release(value);
@@ -566,7 +566,7 @@ void createOutParamsandSendAck(wrp_msg_t *msg, rbusMethodAsyncHandle_t asyncHand
 			rbusValue_SetString(value, msg->u.event.transaction_uuid);
 			rbusObject_SetValue(outParams, "transaction_uuid", value);
 			rbusValue_Release(value);
-			ParodusPrint("outParams msg->u.event.transaction_uuid %s\n", msg->u.event.transaction_uuid);
+			ParodusInfo("outParams msg->u.event.transaction_uuid %s\n", msg->u.event.transaction_uuid);
 		}
 	}
 
@@ -579,7 +579,9 @@ void createOutParamsandSendAck(wrp_msg_t *msg, rbusMethodAsyncHandle_t asyncHand
 			return;
 		}
 
+		ParodusInfo("Before Send ASYNC response\n");
 		err = rbusMethod_SendAsyncResponse(asyncHandle, error, outParams);
+		ParodusInfo("After Send ASYNC response\n");
 		
 		if(err != RBUS_ERROR_SUCCESS)
 		{
