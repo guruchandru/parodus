@@ -104,6 +104,7 @@ int checkCloudAckTimer(long long startTime); //TODO: 7s timeout handling and sen
 XmidtSentMsg* get_global_sendnode(void);
 void release_global_sendnode (void);
 void xmidtSendMsgQDequeue();
+int createSendMsgQData(wrp_msg_t *message, rbusMethodAsyncHandle_t asyncHandle, wrp_msg_t **sendMsg, rbusMethodAsyncHandle_t *sendAsyncHandle);
 long long setStartTime();
 void checkCloudAckTimeout();
 #ifdef __cplusplus

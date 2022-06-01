@@ -33,6 +33,7 @@
 /*----------------------------------------------------------------------------*/
 static void createNewMsgForCRUD(wrp_msg_t *message, wrp_msg_t **crudMessage );
 static void createNewMsgForCloudACK(wrp_msg_t *message, wrp_msg_t **eventMessage ); //Test purpose.
+static int test = 1;
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -61,7 +62,6 @@ void listenerOnMessage(void * msg, size_t msgSize)
     void *resp_bytes;
     cJSON *response = NULL;
     reg_list_item_t *temp = NULL;
-    int test = 0;
     recivedMsg =  (const char *) msg;
 
     ParodusInfo("Received msg from server\n");
@@ -143,7 +143,7 @@ void listenerOnMessage(void * msg, size_t msgSize)
                                 ParodusInfo("sent downstream message to reg_client '%s'\n",temp->url);
                                 ParodusPrint("downstream bytes sent:%d\n", bytes);
                                 destFlag =1;
-				test = 1;
+				test++;
                                 break;
                             }
                             ParodusPrint("checking the next item in the list\n");
@@ -284,7 +284,7 @@ void listenerOnMessage(void * msg, size_t msgSize)
 			{
 				ParodusInfo("cloud ack received with low qos %d, ignoring it\n", eventMsg->u.event.qos);
 			}
-			test++;
+			//test++;
 			ParodusInfo("test is %d\n", test);
 		    }
 		    }

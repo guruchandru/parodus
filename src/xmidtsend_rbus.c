@@ -451,7 +451,26 @@ void sendXmidtEventToServer(wrp_msg_t * msg, rbusMethodAsyncHandle_t asyncHandle
 				ParodusInfo("Start processCloudAck consumer\n");
 				processCloudAck();
 				ParodusInfo("High Qos message, addToXmidtSentMsgQ\n");
-				addToXmidtSentMsgQ(msg, asyncHandle);
+				wrp_msg_t *sendMsg = NULL;
+				rbusMethodAsyncHandle_t sendAsyncHandle;
+				createSendMsgQData(msg, asyncHandle, &sendMsg, &sendAsyncHandle);
+				if(sendMsg != NULL)
+				{
+					ParodusInfo("sendMsg->u.event.source = %s sendMsg->u.event.dest = %s, sendMsg->u.event.transaction_uuid = %s, sendMsg->u.event.content_type = %s\n",sendMsg->u.event.source, sendMsg->u.event.dest, sendMsg->u.event.transaction_uuid, sendMsg->u.event.content_type);
+					if(sendAsyncHandle !=NULL)
+					{
+						ParodusInfo("B4 addToXmidtSentMsgQ\n");
+						addToXmidtSentMsgQ(sendMsg, sendAsyncHandle);
+					}
+					else
+					{
+						ParodusError("sendAsyncHandle is NULL\n");
+					}
+				}
+				else
+				{
+					ParodusError("sendMsg is NULL\n");
+				}
 				ParodusInfo("addToXmidtSentMsgQ done, proceed to xmidtQDequeue\n");
 				xmidtQDequeue();
 				ParodusInfo("xmidtQDequeue done for high Qos msg\n");
@@ -498,6 +517,63 @@ void sendXmidtEventToServer(wrp_msg_t * msg, rbusMethodAsyncHandle_t asyncHandle
 	}
 }
 
+int createSendMsgQData(wrp_msg_t *message, rbusMethodAsyncHandle_t asyncHandle, wrp_msg_t **sendMsg, rbusMethodAsyncHandle_t *sendAsyncHandle)
+{
+	if(message == NULL || asyncHandle == NULL)
+	{
+		ParodusError("createSendMsgQData failed\n");
+		return 0;
+	}
+
+	wrp_msg_t *msg = ( wrp_msg_t * ) malloc( sizeof( wrp_msg_t ) );
+
+	if(msg !=NULL)
+	{
+		memset(msg, 0, sizeof(wrp_msg_t));
+
+		ParodusInfo("wrp msg copy\n");
+		//memcpy(msg, message, sizeof(wrp_msg_t));
+		if(message->u.event.source != NULL)
+		{
+			ParodusInfo("message->u.event.source = %s\n",message->u.event.source);
+			msg->u.event.source = strdup(message->u.event.source);
+		}
+
+		if(message->u.event.dest!= NULL)
+		{
+			ParodusInfo("message->u.event.dest = %s\n",message->u.event.dest);
+			msg->u.event.dest = strdup(message->u.event.dest);
+		}
+
+		if(message->u.event.transaction_uuid != NULL)
+		{
+			ParodusInfo("message->u.event.transaction_uuid = %s\n",message->u.event.transaction_uuid);
+			msg->u.event.transaction_uuid = strdup(message->u.event.transaction_uuid);
+		}
+		if(message->u.event.content_type != NULL)
+		{
+			ParodusInfo("message->u.event.content_type : %s\n",message->u.event.content_type);
+			msg->u.event.content_type = strdup(message->u.event.content_type);
+		}
+
+		*sendMsg = msg;
+		ParodusInfo("msg->u.event.source = %s msg->u.event.dest = %s, msg->u.event.transaction_uuid = %s, sendMsg->u.event.content_type = %s\n",msg->u.event.source, msg->u.event.dest, msg->u.event.transaction_uuid, msg->u.event.content_type);
+
+		rbusMethodAsyncHandle_t handle;
+		ParodusInfo("asynchandle memcpy\n");
+		memcpy(&handle, asyncHandle, sizeof(asyncHandle));
+		ParodusInfo("asynchandle memcpy done\n");
+		*sendAsyncHandle = handle;
+		ParodusInfo("sendAsyncHandle done\n");
+	}
+	else
+	{
+		ParodusError("createSendMsgQData msg malloc failed\n");
+		return 0;
+	}
+	return 1;
+}
+
 void createOutParamsandSendAck(wrp_msg_t *msg, rbusMethodAsyncHandle_t asyncHandle, char *errorMsg, int statuscode, rbusError_t error)
 {
 	rbusObject_t outParams;
@@ -539,6 +615,7 @@ void createOutParamsandSendAck(wrp_msg_t *msg, rbusMethodAsyncHandle_t asyncHand
 
 		if(msg->u.event.dest !=NULL)
 		{
+			ParodusInfo("msg->u.event.dest is %s\n", msg->u.event.dest);
 			rbusValue_Init(&value);
 			rbusValue_SetString(value, msg->u.event.dest);
 			rbusObject_SetValue(outParams, "dest", value);
@@ -547,6 +624,7 @@ void createOutParamsandSendAck(wrp_msg_t *msg, rbusMethodAsyncHandle_t asyncHand
 
 		if(msg->u.event.content_type !=NULL)
 		{
+			ParodusInfo("msg->u.event.content_type is %s\n", msg->u.event.content_type);
 			rbusValue_Init(&value);
 			rbusValue_SetString(value, msg->u.event.content_type);
 			rbusObject_SetValue(outParams, "content_type", value);
@@ -917,7 +995,7 @@ void addToXmidtSentMsgQ(wrp_msg_t * msg, rbusMethodAsyncHandle_t asyncHandle)
 			XmidtSentMsgQ = message;
 
 			ParodusInfo("Producer added xmidt sentmessage\n");
-			pthread_cond_signal(&xmidtsend_con);
+			//pthread_cond_signal(&xmidtsend_con);
 			pthread_mutex_unlock (&xmidtsend_mut);
 			ParodusInfo("mutex unlock in xmidt sent producer\n");
 		}
@@ -1077,6 +1155,7 @@ int processCloudAckMsg(char *cloud_transID, int qos, int rdr)
 
 		if(sentMsg !=NULL)
 		{
+			ParodusInfo("sentMsg->u.event.transaction_uuid is %s temp->startTime %d temp->status %s\n",sentMsg->u.event.transaction_uuid, temp->startTime, temp->status);
 			sentMsgTransID = sentMsg->u.event.transaction_uuid;
 			ParodusInfo("sentMsgTransID is %s\n",sentMsgTransID);
 			if(sentMsgTransID !=NULL)
@@ -1090,6 +1169,10 @@ int processCloudAckMsg(char *cloud_transID, int qos, int rdr)
 					release_global_sendnode();
 					xmidtSendMsgQDequeue();
 					return 1;
+				}
+				else
+				{
+					ParodusError("transaction_id %s is not matching, checking next\n", cloud_transID);
 				}
 			}
 			else
