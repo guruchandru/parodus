@@ -43,6 +43,7 @@ pthread_mutex_t xmidt_mut=PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t xmidt_con=PTHREAD_COND_INITIALIZER;
 
 pthread_mutex_t cloudack_mut=PTHREAD_MUTEX_INITIALIZER;
+int test = 0; //testing
 
 const char * contentTypeList[]={
 "application/json",
@@ -122,7 +123,8 @@ void decrement_XmidtQsize()
 int checkCloudConn()
 {
 	int ret = 1;
-	if (!cloud_status_is_online ())
+	//if (!cloud_status_is_online ())
+	if (test == 1) //test purpose.
 	{
 		ParodusInfo("cloud status is not online, wait till connection up\n");
 
@@ -1151,6 +1153,7 @@ static rbusError_t sendDataHandler(rbusHandle_t handle, char const* methodName, 
 			//generate transaction id to create outParams and send ack
 			transaction_uuid = generate_transaction_uuid();
 			ParodusInfo("xmidt transaction_uuid generated is %s\n", transaction_uuid);
+			test++; //testing
 			parseRbusInparamsToWrp(inParams, transaction_uuid, &wrpMsg);
 
 			//xmidt send producer
